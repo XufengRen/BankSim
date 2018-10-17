@@ -29,7 +29,11 @@ public class Bank {
         if (accounts[from].withdraw(amount)) {
             accounts[to].deposit(amount);
         }
-        if (shouldTest()) test();
+        if (shouldTest()){
+            // NEED TO FIND WAY TO MAKE ALL THREADS WAIT WHEN TESTING IS IN PROGRESS
+            Thread tester = new TestThread(this);
+            tester.start();
+        }
     }
 
     public void test() {
