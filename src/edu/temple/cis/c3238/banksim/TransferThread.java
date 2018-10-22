@@ -1,4 +1,5 @@
 package edu.temple.cis.c3238.banksim;
+
 /**
  * @author Cay Horstmann
  * @author Modified by Paul Wolfgang
@@ -17,7 +18,7 @@ class TransferThread extends Thread {
     }
 
     @Override
-    public void run() {
+    public void run(){
         for (int i = 0; i < 10000; i++) {
             int toAccount = (int) (bank.size() * Math.random());
             int amount = (int) (maxAmount * Math.random());
