@@ -1,6 +1,8 @@
 package edu.temple.cis.c3238.banksim;
 
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * @author Cay Horstmann
@@ -14,7 +16,8 @@ public class Bank {
     private long ntransacts = 0;
     private final int initialBalance;
     private final int numAccounts;
-    private final ReentrantLock tLock;
+    private boolean testing;
+    private int currentTransacts;
 
     public Bank(int numAccounts, int initialBalance) {
         this.initialBalance = initialBalance;
@@ -24,10 +27,11 @@ public class Bank {
             accounts[i] = new Account(this, i, initialBalance);
         }
         ntransacts = 0;
-        tLock = new ReentrantLock();
+        testing = false;
+        currentTransacts = 0;
     }
 
-    public void transfer(int from, int to, int amount) {
+    public void transfer(int from, int to, int amount){
 //        accounts[from].waitForAvailableFunds(amount);
         if (accounts[from].withdraw(amount)) {
             accounts[to].deposit(amount);
@@ -35,31 +39,28 @@ public class Bank {
         //    accounts[from].waitForFunds(amount);
         //}
         if (shouldTest()) {
-            test();
+            synchronized (this) {
+                test();
+            }
         }
     }
 
     public void test() {
-        tLock.lock();
-        try {
-            int sum = 0;
-            for (Account account : accounts) {
-                System.out.printf("%s %s%n",
-                        Thread.currentThread().toString(), account.toString());
-                sum += account.getBalance();
-            }
+        int sum = 0;
+        for (Account account : accounts) {
+            System.out.printf("%s %s%n",
+                    Thread.currentThread().toString(), account.toString());
+            sum += account.getBalance();
+        }
+        System.out.println(Thread.currentThread().toString()
+                + " Sum: " + sum);
+        if (sum != numAccounts * initialBalance) {
             System.out.println(Thread.currentThread().toString()
-                    + " Sum: " + sum);
-            if (sum != numAccounts * initialBalance) {
-                System.out.println(Thread.currentThread().toString()
-                        + " Money was gained or lost");
-                System.exit(1);
-            } else {
-                System.out.println(Thread.currentThread().toString()
-                        + " The bank is in balance");
-            }
-        } finally {
-            tLock.unlock();
+                    + " Money was gained or lost");
+            System.exit(1);
+        } else {
+            System.out.println(Thread.currentThread().toString()
+                    + " The bank is in balance");
         }
     }
 
