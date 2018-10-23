@@ -15,15 +15,11 @@ public class Account {
     private volatile int balance;
     private final int id;
     private final Bank myBank;
-  //  private final ReentrantLock fundsLock;
-//    private final Condition waitFunds;
 
     public Account(Bank myBank, int id, int initialBalance) {
         this.myBank = myBank;
         this.id = id;
         balance = initialBalance;
-        //fundsLock = new ReentrantLock();
-        //waitFunds = fundsLock.newCondition();
     }
 
     //Sync -- takes care of mutual exclusion
@@ -53,21 +49,6 @@ public class Account {
         balance = newBalance;
     }
     
-    /*public void waitForFunds(int amount){
-        fundsLock.lock();
-        try {
-            while(this.getBalance() < amount){
-                try {
-                    waitFunds.await();
-                } catch (InterruptedException ex) {
-                    Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            waitFunds.signalAll();
-        } finally {
-            fundsLock.unlock();
-        }
-    }*/
     
     @Override
     public String toString() {
