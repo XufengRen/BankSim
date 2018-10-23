@@ -17,7 +17,7 @@ public class Bank {
     private final int initialBalance;
     private final int numAccounts;
     private boolean testing;
-    private int currentTransacts;
+    public int current;
 
     public Bank(int numAccounts, int initialBalance) {
         this.initialBalance = initialBalance;
@@ -28,24 +28,50 @@ public class Bank {
         }
         ntransacts = 0;
         testing = false;
-        currentTransacts = 0;
+        current = 0;
     }
 
-    public void transfer(int from, int to, int amount){
-//        accounts[from].waitForAvailableFunds(amount);
-        if (accounts[from].withdraw(amount)) {
-            accounts[to].deposit(amount);
-        } //else {
-        //    accounts[from].waitForFunds(amount);
-        //}
+    public void transfer(int from, int to, int amount) {
+       if(!testing){
+           synchronized(this){current++;}
+            if (accounts[from].withdraw(amount)) {
+                accounts[to].deposit(amount);
+            }
+           synchronized(this){current--; notifyAll();} 
+        }else{
+            synchronized (this) {
+                try {
+                    wait();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+        }
+
         if (shouldTest()) {
             synchronized (this) {
-                test();
+                testing = true;
+                while (current > 0) {
+                    try {
+                        wait();
+                    } catch (InterruptedException ex) {
+                        Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+                    }
+                }
+                TestThread tester = new TestThread();
+                try {
+                    tester.join();
+                    tester.start();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
+                }
+                testing = false;
+                notifyAll();
             }
         }
     }
 
-    public void test() {
+    public synchronized void test() {
         int sum = 0;
         for (Account account : accounts) {
             System.out.printf("%s %s%n",
@@ -72,4 +98,12 @@ public class Bank {
         return ++ntransacts % NTEST == 0;
     }
 
+    private class TestThread extends Thread {
+
+        @Override
+        public void run() {
+            test();
+        }
+
+    }
 }
