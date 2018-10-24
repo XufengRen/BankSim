@@ -16,13 +16,19 @@ public class Account {
     private volatile int balance;
     private final int id;
     private final Bank myBank;
-    private final Lock fundsLock;
+    //private final Lock fundsLock;
+    //private final Condition waitFunds;
+    //private boolean waiting;
+    
 
     public Account(Bank myBank, int id, int initialBalance) {
         this.myBank = myBank;
         this.id = id;
         balance = initialBalance;
-        fundsLock = new ReentrantLock();
+        /*fundsLock = new ReentrantLock();
+        waitFunds = fundsLock.newCondition();
+        waiting = false;
+        */
     }
 
     //Sync -- takes care of mutual exclusion
@@ -32,7 +38,7 @@ public class Account {
 
     // Sync
     public synchronized boolean withdraw(int amount) {
-        if (amount <= balance) {
+        if (amount <= balance /*&& !waiting*/) {
             int currentBalance = balance;
 //            Thread.yield(); // Try to force collision
             int newBalance = currentBalance - amount;
@@ -49,7 +55,6 @@ public class Account {
 //        Thread.yield();   // Try to force collision
         int newBalance = currentBalance + amount;
         balance = newBalance;
-        notifyAll();
         //waitFunds.signalAll();
     }
 
@@ -66,6 +71,7 @@ public class Account {
             }
             this.withdraw(amount);
         } finally {
+            waiting = false;
             fundsLock.unlock();
         }
     }*/
