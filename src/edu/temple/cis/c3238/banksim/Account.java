@@ -1,5 +1,11 @@
 package edu.temple.cis.c3238.banksim;
 
+import java.util.concurrent.locks.Condition;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 /**
  * @author Cay Horstmann
  * @author Modified by Paul Wolfgang
@@ -10,11 +16,13 @@ public class Account {
     private volatile int balance;
     private final int id;
     private final Bank myBank;
+    private final Lock fundsLock;
 
     public Account(Bank myBank, int id, int initialBalance) {
         this.myBank = myBank;
         this.id = id;
         balance = initialBalance;
+        fundsLock = new ReentrantLock();
     }
 
     //Sync -- takes care of mutual exclusion
@@ -35,16 +43,34 @@ public class Account {
         }
     }
 
-    
     //Sync
     public synchronized void deposit(int amount) {
         int currentBalance = balance;
 //        Thread.yield();   // Try to force collision
         int newBalance = currentBalance + amount;
         balance = newBalance;
+        notifyAll();
+        //waitFunds.signalAll();
     }
-    
-    
+
+    /*public void waitForFunds(int amount) {
+        fundsLock.lock();
+        try {
+            waiting = true;
+            while (balance < amount) {
+                try {
+                    waitFunds.await();
+                } catch (InterruptedException ex) {
+                    Logger.getLogger(Account.class.getName()).log(Level.SEVERE, null, ex);
+                }
+            }
+            this.withdraw(amount);
+        } finally {
+            fundsLock.unlock();
+        }
+    }*/
+
+     
     @Override
     public String toString() {
         return String.format("Account[%d] balance %d", id, balance);

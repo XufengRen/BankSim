@@ -22,7 +22,10 @@ class TransferThread extends Thread {
         for (int i = 0; i < 10000; i++) {
             int toAccount = (int) (bank.size() * Math.random());
             int amount = (int) (maxAmount * Math.random());
-            bank.transfer(fromAccount, toAccount, amount);
+            if(bank.transfer(fromAccount, toAccount, amount)){
+                break;
+            }
         }
+        synchronized(bank){bank.closed = true;}
     }
 }

@@ -17,6 +17,7 @@ public class Bank {
     private final int numAccounts;
     private boolean testing;
     public int current;
+    public boolean closed;
 
     public Bank(int numAccounts, int initialBalance) {
         this.initialBalance = initialBalance;
@@ -26,18 +27,22 @@ public class Bank {
             accounts[i] = new Account(this, i, initialBalance);
         }
         ntransacts = 0;
-        testing = false;
+        closed = testing = false;
         current = 0;
     }
 
-    public void transfer(int from, int to, int amount) {
-       if(!testing){
+    public boolean transfer(int from, int to, int amount) {
+       
+        if(!testing && !closed){
            synchronized(this){current++;}
             if (accounts[from].withdraw(amount)) {
                 accounts[to].deposit(amount);
-            }
+            }/*else{
+                accounts[from].waitForFunds(amount);
+                accounts[to].deposit(amount);
+            }*/
            synchronized(this){current--; notifyAll();} 
-        }else{
+        }else if (testing){
             synchronized (this) {
                 try {
                     wait();
@@ -45,6 +50,8 @@ public class Bank {
                     Logger.getLogger(Bank.class.getName()).log(Level.SEVERE, null, ex);
                 }
             }
+        }else{
+            return closed;
         }
 
         if (shouldTest()) {
@@ -68,6 +75,7 @@ public class Bank {
                 notifyAll();
             }
         }
+        return false;
     }
 
     public synchronized void test() {
